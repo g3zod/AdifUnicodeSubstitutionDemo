@@ -8,6 +8,10 @@ namespace AdifUnicodeSubstitutionDemo
      * <summary>
      *   Demonstrates a possible technique for including Unicode code points in ADIF.
      * </summary>
+     * <remarks>
+     *   This version allows choice of the place holder character rather than being
+     *   fixed as '?' (question mark).
+     * </remarks>
      */
     public partial class FrmDemo : Form
     {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Text;
 
 namespace AdifUnicodeSubstitutionDemo
@@ -12,9 +13,9 @@ namespace AdifUnicodeSubstitutionDemo
      *   after a field definition and before the start of another field or end-of-record.<br/>
      *   <br/>
      *   The code point values are offset by 0x80 to ensure that US-ASCII characters are
-     *   not encoded.
+     *   not encoded.  They are hexadecimal to reduce the space taken.
      *   <br/>
-     *   For example, "Café François" generates "&lt;COMMENT:13&gt;Caf? Fran?ois {{3=105,9=103}} "
+     *   For example, "Café François" generates "&lt;COMMENT:13&gt;Caf? Fran?ois {{3=69,9=67}} "
      * </summary>
      * <remarks>
      *   An improvement would be to add a checksum of the field data to the start of the
@@ -58,10 +59,10 @@ namespace AdifUnicodeSubstitutionDemo
          *   The exported field value e.g. "abc??123"
          * </param>
          * <param name="exportedUnicodeSubstitutions">
-         *   The exported Unicode substitutions e.g. "{{3=127616,4=127855}}"
+         *   The exported Unicode substitutions e.g. "{{3=1F280,4=1F36F}}"
          * </param>
          * <param name="exportedCombinedValue">
-         *   The full exported content e.g. "&lt;COMMENT:8&gt;abc??123 {{3=127616,4=127855}}"
+         *   The full exported content e.g. "&lt;COMMENT:8&gt;abc??123 {{3=1F280,4=1F36F}}"
          * </param>
          */
 
@@ -106,7 +107,7 @@ namespace AdifUnicodeSubstitutionDemo
                             string.Format(
                                 "{0}={1},",
                                 fieldValue.Length - 1,
-                                CodePointOffset + char.ConvertToUtf32(valueToExport, i)));
+                                (CodePointOffset + char.ConvertToUtf32(valueToExport, i)).ToString("X")));
                         i++;
                     }
                     else if (valueToExport[i] >= 0x80)
@@ -121,7 +122,7 @@ namespace AdifUnicodeSubstitutionDemo
                             string.Format(
                                 "{0}={1},",
                                 fieldValue.Length - 1,
-                                CodePointOffset + BitConverter.ToInt32(bytes, 0)));
+                                (CodePointOffset + BitConverter.ToInt32(bytes, 0)).ToString("X")));
                     }
                     else
                     {
@@ -166,7 +167,7 @@ namespace AdifUnicodeSubstitutionDemo
          *   The imported field value e.g. "abc??123"
          * </param>
          * <param name="importedUnicodeSubstitutions">
-         *   The imported Unicode values e.g. "{{3=127616,4=127855}}"
+         *   The imported Unicode values e.g. "{{3=1F280,4=1F36F}}"
          * </param>
          * <param name="fieldData">
          *   The resulting imported string value e.g. "abc🌀🏯123"
@@ -206,9 +207,11 @@ namespace AdifUnicodeSubstitutionDemo
                         string[] parts = unicodeValue.Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
                         if (parts.Length == 2)
                         {
-                            if (int.TryParse(parts[0], out int index) && int.TryParse(parts[1], out int utf32))
+                            if (int.TryParse(parts[0], out int index) &&
+                                int.TryParse(parts[1], System.Globalization.NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int utf32))
                             {
                                 // Get the original Unicode code point as a byte array.
+                                //byte[] unicodeBytes = BitConverter.GetBytes(utf32 - CodePointOffset);
                                 byte[] unicodeBytes = BitConverter.GetBytes(utf32 - CodePointOffset);
 
                                 // Convert the byte array into a UTF-16 string.
